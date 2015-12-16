@@ -1,0 +1,70 @@
+From 6bbee35fd6daed045103f3122490a588d97c066a Mon Sep 17 00:00:00 2001
+From: Evan Phoenix <evan@phx.io>
+Date: Thu, 14 May 2015 14:53:35 -0700
+Subject: [PATCH] Limit API endpoint to original security domain
+
+Conflicts:
+	lib/rubygems/remote_fetcher.rb
+
+Conflicts:
+	test/rubygems/test_gem_remote_fetcher.rb
+---
+ lib/rubygems/remote_fetcher.rb           |  8 +++++++-
+ test/rubygems/test_gem_remote_fetcher.rb | 18 ++++++++++++++++--
+ 2 files changed, 23 insertions(+), 3 deletions(-)
+
+diff --git a/lib/rubygems/remote_fetcher.rb b/lib/rubygems/remote_fetcher.rb
+index da1febb..ec78e5f 100644
+--- a/lib/rubygems/remote_fetcher.rb
++++ b/lib/rubygems/remote_fetcher.rb
+@@ -94,7 +94,13 @@ def api_endpoint(uri)
+     rescue Resolv::ResolvError
+       uri
+     else
+-      URI.parse "#{uri.scheme}://#{res.target}#{uri.path}"
++      target = res.target.to_s.strip
++
++      if /#{host}\z/ =~ target
++        return URI.parse "#{uri.scheme}://#{target}#{uri.path}"
++      end
++
++      uri
+     end
+   end
+ 
+diff --git a/test/rubygems/test_gem_remote_fetcher.rb b/test/rubygems/test_gem_remote_fetcher.rb
+index 883e1bd..a590dca 100644
+--- a/test/rubygems/test_gem_remote_fetcher.rb
++++ b/test/rubygems/test_gem_remote_fetcher.rb
+@@ -167,6 +167,21 @@ def test_no_proxy
+   end
+ 
+   def test_api_endpoint
++    uri = URI.parse "http://example.com/foo"
++    target = MiniTest::Mock.new
++    target.expect :target, "gems.example.com"
++
++    dns = MiniTest::Mock.new
++    dns.expect :getresource, target, [String, Object]
++
++    fetch = Gem::RemoteFetcher.new nil, dns
++    assert_equal URI.parse("http://gems.example.com/foo"), fetch.api_endpoint(uri)
++
++    target.verify
++    dns.verify
++  end
++
++  def test_api_endpoint_ignores_trans_domain_values
+     uri = URI.parse "http://gems.example.com/foo"
+     target = MiniTest::Mock.new
+     target.expect :target, "blah.com"
+@@ -175,8 +190,7 @@ def test_api_endpoint
+     dns.expect :getresource, target, [String, Object]
+ 
+     fetch = Gem::RemoteFetcher.new nil, dns
+-    @fetcher = fetcher
+-    assert_equal URI.parse("http://blah.com/foo"), fetch.api_endpoint(uri)
++    assert_equal URI.parse("http://gems.example.com/foo"), fetch.api_endpoint(uri)
+ 
+     target.verify
+     dns.verify
