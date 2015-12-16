@@ -1,0 +1,27 @@
+From edacc7d236b87ab3a53a5812967a8fd75d61cd09 Mon Sep 17 00:00:00 2001
+From: naruse <naruse@b2dd03c8-39d4-4d8f-98ff-823fe69b080e>
+Date: Tue, 12 Feb 2013 03:18:04 +0000
+Subject: [PATCH] Get libc's path by ldd [Bug #7828] [ruby-core:52129]
+
+git-svn-id: svn+ssh://ci.ruby-lang.org/ruby/trunk@39209 b2dd03c8-39d4-4d8f-98ff-823fe69b080e
+---
+ test/ruby/test_m17n_comb.rb | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/test/ruby/test_m17n_comb.rb b/test/ruby/test_m17n_comb.rb
+index 904c609..2de7179 100644
+--- a/test/ruby/test_m17n_comb.rb
++++ b/test/ruby/test_m17n_comb.rb
+@@ -722,7 +722,8 @@ def test_str_count
+   def test_str_crypt
+     begin
+       # glibc 2.16 or later denies salt contained other than [0-9A-Za-z./] #7312
+-      glibcver = `#{RbConfig::CONFIG["libdir"]}/libc.so.6`[/\AGNU C Library.*version ([0-9.]+)/, 1].split('.').map(&:to_i)
++      glibcpath = `ldd #{RbConfig.ruby}`[/\S+\/libc.so\S+/]
++      glibcver = `#{glibcpath}`[/\AGNU C Library.*version ([0-9.]+)/, 1].split('.').map(&:to_i)
+       strict_crypt = (glibcver <=> [2, 16]) > -1
+     rescue
+     end
+-- 
+1.8.4
+
