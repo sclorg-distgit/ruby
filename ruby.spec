@@ -23,7 +23,7 @@
 %global ruby_archive %{ruby_archive}-%{?milestone}%{?!milestone:%{?revision:r%{revision}}}
 %endif
 
-%global release 56
+%global release 57
 %{!?release_string:%global release_string %{?development_release:0.}%{release}%{?development_release:.%{development_release}}%{?dist}}
 
 # The RubyGems library has to stay out of Ruby directory three, since the
@@ -626,12 +626,10 @@ sed -i 's/^/%lang(ja) /' .ruby-doc.ja
 
 %check
 # Ruby software collection tests
-#   - Failing
-#   - TODO: fix
 %{?scl:scl enable %scl - << \EOF
 mkdir -p ./lib/rubygems/defaults
 cp %{SOURCE1} ./lib/rubygems/defaults
-make test-all TESTS="%{SOURCE14}" | grep ", 1 failures, 0 errors, " || exit 1
+make test-all TESTS="%{SOURCE14}" || exit 1
 rm -rf ./lib/rubygems/defaults
 EOF}
 
@@ -657,7 +655,7 @@ DISABLE_TESTS=""
 
 # https://bugs.ruby-lang.org/issues/11480
 # Once seen: http://koji.fedoraproject.org/koji/taskinfo?taskID=12556650
-DISABLE_TESTS="$DISABLE_TESTS -x test_fork.rb -x test_rinda.rb -x test_thread.rb"
+DISABLE_TESTS="$DISABLE_TESTS -x test_fork.rb -x test_rinda.rb"
 
 make check TESTS="-v $DISABLE_TESTS"
 
@@ -962,6 +960,9 @@ make check TESTS="-v $DISABLE_TESTS"
 %{ruby_libdir}/tkextlib
 
 %changelog
+* Fri Feb 19 2016 Pavel Valena <pvalena@redhat.com> - 2.3.0-57
+- Fix dependent scls's paths
+
 * Thu Feb 18 2016 Pavel Valena <pvalena@redhat.com> - 2.3.0-56
 - Fix macros.ruby and macros.rubygems
 

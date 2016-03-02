@@ -48,6 +48,26 @@ module Gem
         :system => previous_but_one_dir_to(RbConfig::CONFIG['vendordir'], RbConfig::CONFIG['RUBY_INSTALL_NAME']),
         :local => previous_but_one_dir_to(RbConfig::CONFIG['sitedir'], RbConfig::CONFIG['RUBY_INSTALL_NAME'])
       }
+
+      # Add additional default locations for enabled software collections
+      # Dependent scls needs to add themselves on $GEM_PATH
+      if ENV['GEM_PATH']
+        gem_paths = ENV['GEM_PATH'].split(':')
+
+        ENV['X_SCLS'].split(' ').each do |scl|
+          next if scl == '@SCL@'
+
+          regexp = /#{scl}\/root\/usr\/share\/gems/
+          scl_gem_path = gem_paths.grep(regexp)[0]
+          if scl_gem_path
+            prefix = scl_gem_path.gsub(/\A(.*)#{regexp}\z/, "\\1")
+            @default_locations["#{scl}_system".to_sym] = "#{prefix}#{scl}/root/usr"
+            @default_locations["#{scl}_local".to_sym] = "#{prefix}#{scl}/root/usr/local"
+          end
+        end if ENV['X_SCLS']
+      end
+
+      @default_locations
     end
 
     ##
@@ -122,9 +142,12 @@ module Gem
 
     def default_ext_dir_for base_dir
       dir = if rpmbuild?
-        build_dir = base_dir.chomp Gem.default_dirs[:system][:gem_dir]
+        scl_prefix = ENV['X_SCLS'].split(' ').detect {|c| c != '@SCL@' && base_dir =~ /\/#{c}\//}
+        scl_prefix = scl_prefix ? scl_prefix + '_': nil
+
+        build_dir = base_dir.chomp Gem.default_dirs[:"#{scl_prefix}system"][:gem_dir]
         if build_dir != base_dir
-          File.join build_dir, Gem.default_dirs[:system][:ext_dir]
+          File.join build_dir, Gem.default_dirs[:"#{scl_prefix}system"][:ext_dir]
         end
       else
         dirs = Gem.default_dirs.detect {|location, paths| paths[:gem_dir] == base_dir}
