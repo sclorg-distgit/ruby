@@ -116,10 +116,10 @@ module Gem
     # RubyGems default overrides.
 
     def default_dir
-      scl_prefix = ENV['X_SCLS'].split(' ').detect {|c| c != '@SCL@'}
-      scl_prefix = scl_prefix ? scl_prefix + '_': nil
-
       if opt_build_root?
+        scl_prefix = ENV['X_SCLS'].split(' ').detect {|c| c != '@SCL@'}
+        scl_prefix = scl_prefix ? scl_prefix + '_': nil
+
         Gem.default_dirs[:"#{scl_prefix}system"][:gem_dir]
       elsif Process.uid == 0
         Gem.default_dirs[:local][:gem_dir]
@@ -134,10 +134,10 @@ module Gem
     end
 
     def default_bindir
-      scl_prefix = ENV['X_SCLS'].split(' ').detect {|c| c != '@SCL@'}
-      scl_prefix = scl_prefix ? scl_prefix + '_': nil
-
       if opt_build_root?
+        scl_prefix = ENV['X_SCLS'].split(' ').detect {|c| c != '@SCL@'}
+        scl_prefix = scl_prefix ? scl_prefix + '_': nil
+
         Gem.default_dirs[:"#{scl_prefix}system"][:bin_dir]
       elsif Process.uid == 0
         Gem.default_dirs[:local][:bin_dir]

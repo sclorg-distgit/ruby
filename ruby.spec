@@ -23,7 +23,7 @@
 %global ruby_archive %{ruby_archive}-%{?milestone}%{?!milestone:%{?revision:r%{revision}}}
 %endif
 
-%global release 58
+%global release 59
 %{!?release_string:%global release_string %{?development_release:0.}%{release}%{?development_release:.%{development_release}}%{?dist}}
 
 # The RubyGems library has to stay out of Ruby directory three, since the
@@ -179,10 +179,10 @@ Provides:   %{?scl_prefix}ruby(release) = %{ruby_release}
 
 # Virtual provides for CCAN copylibs.
 # https://fedorahosted.org/fpc/ticket/364
-Provides: %{?scl_prefix}bundled(ccan-build_assert)
-Provides: %{?scl_prefix}bundled(ccan-check_type)
-Provides: %{?scl_prefix}bundled(ccan-container_of)
-Provides: %{?scl_prefix}bundled(ccan-list)
+Provides: bundled(ccan-build_assert)
+Provides: bundled(ccan-check_type)
+Provides: bundled(ccan-container_of)
+Provides: bundled(ccan-list)
 
 %description libs
 This package includes the libruby, necessary to run Ruby.
@@ -204,8 +204,8 @@ Requires:   %{?scl_prefix}rubygem(psych) >= %{psych_version}
 Provides:   %{?scl_prefix}gem = %{version}-%{release}
 Provides:   %{?scl_prefix}ruby(rubygems) = %{version}-%{release}
 # https://github.com/rubygems/rubygems/pull/1189#issuecomment-121600910
-Provides:   %{?scl_prefix}bundled(rubygem(molinillo)) = %{molinillo_version}
-Provides:   %{?scl_prefix}bundled(rubygem-molinillo) = %{molinillo_version}
+Provides:   bundled(rubygem(molinillo)) = %{molinillo_version}
+Provides:   bundled(rubygem-molinillo) = %{molinillo_version}
 BuildArch:  noarch
 
 %description -n %{?scl_prefix}rubygems
@@ -476,7 +476,6 @@ cp -a %{SOURCE6} .
 %build
 autoconf
 
-%{?scl:scl enable %{scl} - << \EOF}
 %configure \
         --with-rubylibprefix='%{ruby_libdir}' \
         --with-archlibdir='%{_libdir}' \
@@ -497,18 +496,13 @@ autoconf
         --enable-multiarch \
         --with-prelude=./abrt_prelude.rb \
 
-%{?scl:EOF}
 # Q= makes the build output more verbose and allows to check Fedora
 # compiler options.
-%{?scl:scl enable %{scl} - << \EOF}
 make %{?_smp_mflags} COPY="cp -p" Q=
-%{?scl:EOF}
 
 %install
 rm -rf %{buildroot}
-%{?scl:scl enable %{scl} - << \EOF}
 make install DESTDIR=%{buildroot}
-%{?scl:EOF}
 
 # Rename ruby/config.h to ruby/config-<arch>.h to avoid file conflicts on
 # multilib systems and install config.h wrapper
@@ -960,6 +954,11 @@ make check TESTS="-v $DISABLE_TESTS"
 %{ruby_libdir}/tkextlib
 
 %changelog
+* Mon Feb 22 2016 Vít Ondruch <vondruch@redhat.com> - 2.3.0-59
+- Don't prefix bundling provides.
+- Don't enable collections for build.
+- Optimize operating_system.rb a bit.
+
 * Fri Feb 19 2016 Pavel Valena <pvalena@redhat.com> - 2.3.0-58
 - Fix default_dir and default_bindir
 
