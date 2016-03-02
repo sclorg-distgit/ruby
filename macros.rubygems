@@ -4,7 +4,7 @@
 
 # Common gem locations and files.
 %gem_instdir %{gem_dir}/gems/%{gem_name}-%{version}
-%gem_extdir_mri %{gem_archdir}/%{name}/%{gem_name}-%{version}
+%gem_extdir_mri %{gem_archdir}/ruby/%{gem_name}-%{version}
 %gem_libdir %{gem_instdir}/lib
 %gem_cache %{gem_dir}/cache/%{gem_name}-%{version}.gem
 %gem_spec %{gem_dir}/specifications/%{gem_name}-%{version}.gemspec
