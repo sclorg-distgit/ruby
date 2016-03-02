@@ -23,7 +23,7 @@
 %global ruby_archive %{ruby_archive}-%{?milestone}%{?!milestone:%{?revision:r%{revision}}}
 %endif
 
-%global release 57
+%global release 58
 %{!?release_string:%global release_string %{?development_release:0.}%{release}%{?development_release:.%{development_release}}%{?dist}}
 
 # The RubyGems library has to stay out of Ruby directory three, since the
@@ -960,6 +960,9 @@ make check TESTS="-v $DISABLE_TESTS"
 %{ruby_libdir}/tkextlib
 
 %changelog
+* Fri Feb 19 2016 Pavel Valena <pvalena@redhat.com> - 2.3.0-58
+- Fix default_dir and default_bindir
+
 * Fri Feb 19 2016 Pavel Valena <pvalena@redhat.com> - 2.3.0-57
 - Fix dependent scls's paths
 
