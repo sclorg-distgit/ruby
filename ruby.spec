@@ -649,7 +649,7 @@ DISABLE_TESTS=""
 
 # https://bugs.ruby-lang.org/issues/11480
 # Once seen: http://koji.fedoraproject.org/koji/taskinfo?taskID=12556650
-DISABLE_TESTS="$DISABLE_TESTS -x test_fork.rb"
+DISABLE_TESTS="$DISABLE_TESTS -x test_fork.rb -x test_rinda.rb"
 
 TZ=UTC make check TESTS="-v $DISABLE_TESTS"
 
