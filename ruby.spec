@@ -23,7 +23,7 @@
 %global ruby_archive %{ruby_archive}-%{?milestone}%{?!milestone:%{?revision:r%{revision}}}
 %endif
 
-%global release 59
+%global release 60
 %{!?release_string:%global release_string %{?development_release:0.}%{release}%{?development_release:.%{development_release}}%{?dist}}
 
 # The RubyGems library has to stay out of Ruby directory three, since the
@@ -532,9 +532,9 @@ done
 # would be wrongly evaluated during build of other packages.
 mkdir -p %{buildroot}%{_root_sysconfdir}/rpm
 install -m 644 %{SOURCE4} %{buildroot}%{_root_sysconfdir}/rpm/macros.ruby%{?scl:.%{scl}}
-sed -i "s/%%{name}/%{name}/" %{buildroot}%{_root_sysconfdir}/rpm/macros.ruby%{?scl:.%{scl}}
+sed -i "s/%%{pkg_name}/%{pkg_name}/" %{buildroot}%{_root_sysconfdir}/rpm/macros.ruby%{?scl:.%{scl}}
 install -m 644 %{SOURCE5} %{buildroot}%{_root_sysconfdir}/rpm/macros.rubygems%{?scl:.%{scl}}
-sed -i "s/%%{name}/%{name}/" %{buildroot}%{_root_sysconfdir}/rpm/macros.rubygems%{?scl:.%{scl}}
+sed -i "s/%%{pkg_name}/%{pkg_name}/" %{buildroot}%{_root_sysconfdir}/rpm/macros.rubygems%{?scl:.%{scl}}
 
 # Install custom operating_system.rb.
 mkdir -p %{buildroot}%{rubygems_dir}/rubygems/defaults
@@ -649,9 +649,9 @@ DISABLE_TESTS=""
 
 # https://bugs.ruby-lang.org/issues/11480
 # Once seen: http://koji.fedoraproject.org/koji/taskinfo?taskID=12556650
-DISABLE_TESTS="$DISABLE_TESTS -x test_fork.rb -x test_rinda.rb"
+DISABLE_TESTS="$DISABLE_TESTS -x test_fork.rb"
 
-make check TESTS="-v $DISABLE_TESTS"
+TZ=UTC make check TESTS="-v $DISABLE_TESTS"
 
 %post libs -p /sbin/ldconfig
 
@@ -954,6 +954,11 @@ make check TESTS="-v $DISABLE_TESTS"
 %{ruby_libdir}/tkextlib
 
 %changelog
+* Wed Apr 13 2016 Pavel Valena <pvalena@redhat.com>
+- Fix ruby lib path in macros.ruby.rh-ruby23
+  - Resolves: rhbz#1255753
+- Manually set UTC timezone for tests
+
 * Mon Feb 22 2016 Vít Ondruch <vondruch@redhat.com> - 2.3.0-59
 - Don't prefix bundling provides.
 - Don't enable collections for build.
