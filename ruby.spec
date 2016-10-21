@@ -23,7 +23,7 @@
 %global ruby_archive %{ruby_archive}-%{?milestone}%{?!milestone:%{?revision:r%{revision}}}
 %endif
 
-%global release 60
+%global release 61
 %{!?release_string:%global release_string %{?development_release:0.}%{release}%{?development_release:.%{development_release}}%{?dist}}
 
 # The RubyGems library has to stay out of Ruby directory three, since the
@@ -162,6 +162,8 @@ BuildRequires: %{?_root_bindir}%{!?_root_bindir:%{_bindir}}/cmake
 # virtual provide. It can be installed as dependency of rubypick.
 Provides: ruby(runtime_executable) = %{ruby_release}
 
+%global __provides_exclude_from ^(%{ruby_libarchdir}|%{gem_archdir})/.*\\.so$
+
 %description
 Ruby is the interpreted scripting language for quick and easy
 object-oriented programming.  It has many features to process text
@@ -181,6 +183,8 @@ Ruby or an application embedding Ruby.
 Summary:    Libraries necessary to run Ruby
 Group:      Development/Libraries
 License:    Ruby or BSD
+# This could be removed once rhbz#1054711 is resolved.
+%{?scl:Requires: %{scl}-runtime}
 Provides:   %{?scl_prefix}ruby(release) = %{ruby_release}
 
 # Virtual provides for CCAN copylibs.
@@ -968,6 +972,9 @@ TZ=UTC make check TESTS="-v $DISABLE_TESTS"
 %{ruby_libdir}/tkextlib
 
 %changelog
+* Mon Jul 25 2016 Pavel Valena <pvalena@redhat.com> - 2.3.0-61
+- Add %%{scl}-runtime to Requires in libs subpackage
+
 * Tue Jul 19 2016 Pavel Valena <pvalena@redhat.com> - 2.3.0-60
 - Fix and enhance systemtap tests
 - Remove tests depending on Europe/Moscow to avoid failures due to tzdata change
