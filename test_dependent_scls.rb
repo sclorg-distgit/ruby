@@ -7,7 +7,7 @@ class TestDependentSCLS < Test::Unit::TestCase
 
   def setup
     # Avoid caching
-    Gem.class_eval("@default_locations, @default_dirs = nil, nil")
+    Gem.class_eval("@x_scls, @default_locations, @default_dirs = nil, nil, nil")
 
     # TODO: Different bin dir during build ("/builddir/build/BUILD/ruby-2.0.0-p247")
     @bin_dir = Gem::ConfigMap[:bindir].split(File::SEPARATOR).last

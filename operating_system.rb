@@ -39,6 +39,14 @@ module Gem
     private :rpmbuild?
 
     ##
+    # Get enabled SCLs in order of (most) dependent SCL to base SCL
+
+    def x_scls
+      @x_scls ||= ENV['X_SCLS'].split(' ').reverse!
+    end
+    private :x_scls
+
+    ##
     # Default gems locations allowed on FHS system (/usr, /usr/share).
     # The locations are derived from directories specified during build
     # configuration.
@@ -54,7 +62,7 @@ module Gem
       if ENV['GEM_PATH']
         gem_paths = ENV['GEM_PATH'].split(':')
 
-        ENV['X_SCLS'].split(' ').each do |scl|
+        x_scls.each do |scl|
           next if scl == '@SCL@'
 
           regexp = /#{scl}\/root\/usr\/share\/gems/
@@ -64,7 +72,7 @@ module Gem
             @default_locations["#{scl}_system".to_sym] = "#{prefix}#{scl}/root/usr"
             @default_locations["#{scl}_local".to_sym] = "#{prefix}#{scl}/root/usr/local"
           end
-        end if ENV['X_SCLS']
+        end
       end
 
       @default_locations
@@ -117,7 +125,7 @@ module Gem
 
     def default_dir
       if opt_build_root?
-        scl_prefix = ENV['X_SCLS'].split(' ').detect {|c| c != '@SCL@'}
+        scl_prefix = x_scls.detect {|c| c != '@SCL@'}
         scl_prefix = scl_prefix ? scl_prefix + '_': nil
 
         Gem.default_dirs[:"#{scl_prefix}system"][:gem_dir]
@@ -135,7 +143,7 @@ module Gem
 
     def default_bindir
       if opt_build_root?
-        scl_prefix = ENV['X_SCLS'].split(' ').detect {|c| c != '@SCL@'}
+        scl_prefix = x_scls.detect {|c| c != '@SCL@'}
         scl_prefix = scl_prefix ? scl_prefix + '_': nil
 
         Gem.default_dirs[:"#{scl_prefix}system"][:bin_dir]
@@ -148,7 +156,7 @@ module Gem
 
     def default_ext_dir_for base_dir
       dir = if rpmbuild?
-        scl_prefix = ENV['X_SCLS'].split(' ').detect {|c| c != '@SCL@' && base_dir =~ /\/#{c}\//}
+        scl_prefix = x_scls.detect {|c| c != '@SCL@' && base_dir =~ /\/#{c}\//}
         scl_prefix = scl_prefix ? scl_prefix + '_': nil
 
         build_dir = base_dir.chomp Gem.default_dirs[:"#{scl_prefix}system"][:gem_dir]

@@ -12,7 +12,7 @@ diff --git a/Makefile.in b/Makefile.in
 index 76b61f5..2432884 100644
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -307,7 +307,7 @@ reconfig config.status:	$(srcdir)/$(CONFIGURE) $(srcdir)/enc/Makefile.in \
+@@ -309,7 +309,7 @@ reconfig config.status:	$(srcdir)/$(CONFIGURE) $(srcdir)/enc/Makefile.in \
  	@PWD= MINIRUBY="$(MINIRUBY)"; export MINIRUBY; \
  	set $(SHELL) $($@-args); $(reconfig-exec-$(V))
  
