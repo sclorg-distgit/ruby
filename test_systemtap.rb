@@ -3,8 +3,10 @@ require 'set'
 LIBRUBY_SO = 'libruby.so'
 PROBES_D = 'probes.d'
 
-###
-# Detect SystemTap section headers presence.
+# These probes are excluded by VM_COLLECT_USAGE_DETAILS ifdef.
+EXCLUDE_PROBES = Set.new %w(insn insn__operand)
+
+## Detect SystemTap section headers presence
 
 stap_headers = [
   '\.stapsdt\.base',
@@ -22,43 +24,42 @@ unless detected_stap_headers.size == 2
   exit false
 end
 
-###
-# Find if every declared probe is propagated to resulting library.
+## Find if every declared probe is propagated to resulting library
 
 # Colect probes specified in probes.d file.
-probes = []
+probes_declared = []
 
 File.open(PROBES_D) do |file|
   file.each_line do |line|
     if probe = line[/probe (\S+)\(.*\);/, 1]
-      probes << probe
+      probes_declared << probe
     end
   end
 end
 
-probes = Set.new probes
+probes_declared = Set.new probes_declared
 
-# These probes are excluded by VM_COLLECT_USAGE_DETAILS ifdef.
-EXCLUDE_PROBES = Set.new %w(insn insn__operand)
-unless EXCLUDE_PROBES.subset? probes
+unless EXCLUDE_PROBES.subset? probes_declared
   puts 'ERROR: Change in SystemTap (DTrace) probes definition file detected.'
   exit false
 end
 
-probes -= EXCLUDE_PROBES
+probes_declared -= EXCLUDE_PROBES
 
 # Detect probes in resulting library.
-probe_regexp = %r{
-^\s*stapsdt\s*0[xX][0-9a-fA-F]+\tNT_STAPSDT \(SystemTap probe descriptors\)$
-^\s*Provider: ruby$
-^\s*Name: (\S+)$
+get_probes_detected = %r{
+^\s*Provider:\s+ruby,\s+Name:\s+(\S+),\s+.*$
 }
 
-notes = `readelf -n "#{LIBRUBY_SO}"`
-detected_probes = Set.new notes.scan(probe_regexp).flatten
+probes_detected = `eu-readelf -n "#{LIBRUBY_SO}"`
+
+probes_detected = Set.new probes_detected.scan(get_probes_detected).flatten
 
 # Both sets must be equal, otherwise something is wrong.
-unless probes == detected_probes
+unless probes_declared == probes_detected
   puts 'ERROR: SystemTap (DTrace) probes were not correctly propagated into resulting library.'
+  puts "       Undetected probes: #{(probes_declared - probes_detected).sort.join(', ')}\n",
+       "       Additional detected probes: #{(probes_detected - probes_declared).sort.join(', ')}"
+
   exit false
 end

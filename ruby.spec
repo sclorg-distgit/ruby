@@ -3,7 +3,7 @@
 
 %global major_version 2
 %global minor_version 3
-%global teeny_version 0
+%global teeny_version 1
 %global major_minor_version %{major_version}.%{minor_version}
 
 %global ruby_version %{major_minor_version}.%{teeny_version}
@@ -23,7 +23,7 @@
 %global ruby_archive %{ruby_archive}-%{?milestone}%{?!milestone:%{?revision:r%{revision}}}
 %endif
 
-%global release 60
+%global release 62
 %{!?release_string:%global release_string %{?development_release:0.}%{release}%{?development_release:.%{development_release}}%{?dist}}
 
 # The RubyGems library has to stay out of Ruby directory three, since the
@@ -57,10 +57,6 @@
 %global tapset_libdir %(echo %{_libdir} | sed 's/64//')*
 
 %global _normalized_cpu %(echo %{_target_cpu} | sed 's/^ppc/powerpc/;s/i.86/i386/;s/sparcv./sparc/')
-
-%if 0%{?fedora} >= 19
-%global with_rubypick 1
-%endif
 
 Summary: An interpreter of object-oriented scripting language
 Name: %{?scl_prefix}ruby
@@ -125,10 +121,9 @@ Patch6: ruby-2.1.0-Allow-to-specify-additional-preludes-by-configuratio.patch
 # Use miniruby to regenerate prelude.c.
 # https://bugs.ruby-lang.org/issues/10554
 Patch7: ruby-2.2.3-Generate-preludes-using-miniruby.patch
-# 98e565ec78cb4a07ffde8589ac4581fca31e9c17
-# https://bugs.ruby-lang.org/issues/11962
-# https://bugs.ruby-lang.org/projects/ruby-trunk/repository/revisions/53455
-Patch8: ruby-2.3.0-undef-BUILTIN_CHOOSE_EXPR_CONSTANT_P.patch
+# Disable colorized ./configure due to missing macro AS_FUNCTION_DESCRIBE in Autoconf
+# http://git.savannah.gnu.org/cgit/autoconf.git/tree/lib/m4sugar/m4sh.m4?id=d99fef0e1e8e7a4c04b97fc4c6e0ffb01463622c
+Patch9: ruby-2.3.0-Disable-colorized-configure.patch
 
 Requires: %{?scl_prefix}%{pkg_name}-libs%{?_isa} = %{version}-%{release}
 Requires: %{?scl_prefix}ruby(rubygems) >= %{rubygems_version}
@@ -137,6 +132,7 @@ Requires: %{?scl_prefix}ruby(rubygems) >= %{rubygems_version}
 # See https://bugzilla.redhat.com/show_bug.cgi?id=829209
 # and http://bugs.ruby-lang.org/issues/6123
 Requires: %{?scl_prefix}rubygem(bigdecimal) >= %{bigdecimal_version}
+Requires: %{?scl_prefix}rubygem(did_you_mean) >= %{did_you_mean_version}
 %{?scl:BuildRequires: %{scl}-runtime}
 BuildRequires: autoconf
 BuildRequires: gdbm-devel
@@ -155,6 +151,8 @@ BuildRequires: %{?_root_bindir}%{!?_root_bindir:%{_bindir}}/cmake
 # This package provides %%{_bindir}/ruby-mri therefore it is marked by this
 # virtual provide. It can be installed as dependency of rubypick.
 Provides: ruby(runtime_executable) = %{ruby_release}
+
+%global __provides_exclude_from ^(%{ruby_libarchdir}|%{gem_archdir})/.*\\.so$
 
 %description
 Ruby is the interpreted scripting language for quick and easy
@@ -175,6 +173,8 @@ Ruby or an application embedding Ruby.
 Summary:    Libraries necessary to run Ruby
 Group:      Development/Libraries
 License:    Ruby or BSD
+# This could be removed once rhbz#1054711 is resolved.
+%{?scl:Requires: %{scl}-runtime}
 Provides:   %{?scl_prefix}ruby(release) = %{ruby_release}
 
 # Virtual provides for CCAN copylibs.
@@ -463,7 +463,10 @@ rm -rf ext/fiddle/libffi*
 %patch5 -p1
 %patch6 -p1
 %patch7 -p1
-%patch8 -p1
+%patch9 -p1
+
+# Allow to use autoconf 2.63.
+sed -i '/AC_PREREQ/ s/(.*)/(2.62)/' configure.in
 
 # Provide an example of usage of the tapset:
 cp -a %{SOURCE3} .
@@ -472,6 +475,9 @@ cp -a %{SOURCE3} .
 # available together with Ruby's source due to
 # https://github.com/ruby/ruby/blob/trunk/tool/compile_prelude.rb#L26
 cp -a %{SOURCE6} .
+
+# Disable colorized ./configure
+rm aclocal.m4
 
 %build
 autoconf
@@ -651,7 +657,7 @@ DISABLE_TESTS=""
 # Once seen: http://koji.fedoraproject.org/koji/taskinfo?taskID=12556650
 DISABLE_TESTS="$DISABLE_TESTS -x test_fork.rb -x test_rinda.rb -x test_time_tz.rb"
 
-TZ=UTC make check TESTS="-v $DISABLE_TESTS"
+make check TESTS="-v $DISABLE_TESTS"
 
 %post libs -p /sbin/ldconfig
 
@@ -864,8 +870,6 @@ TZ=UTC make check TESTS="-v $DISABLE_TESTS"
 %config(noreplace) %{_root_sysconfdir}/rpm/macros.rubygems%{?scl:.%{scl}}
 
 %files -n %{?scl_prefix}rubygem-rake
-# TODO: file is missing
-#%{ruby_libdir}/rake*
 %{_bindir}/rake
 %{gem_dir}/gems/rake-%{rake_version}
 %{gem_dir}/specifications/rake-%{rake_version}.gemspec
@@ -954,7 +958,23 @@ TZ=UTC make check TESTS="-v $DISABLE_TESTS"
 %{ruby_libdir}/tkextlib
 
 %changelog
-* Wed Apr 13 2016 Pavel Valena <pvalena@redhat.com>
+* Fri Aug 12 2016 Pavel Valena <pvalena@redhat.com> - 2.3.1-62
+- Fix support for dependent^2 SCLs
+- Update to Ruby 2.3.1
+  * Remove Patch8:
+      ruby-2.3.0-undef-BUILTIN_CHOOSE_EXPR_CONSTANT_P.patch; subsumed
+  * Remove Patch10:
+      ruby-2.3.1-remove-tests-depending-on-europe-moscow.patch; subsumed
+      also removed "UTC=TZ " tests prefix
+
+* Mon Jul 25 2016 Pavel Valena <pvalena@redhat.com> - 2.3.0-61
+- Add %%{scl}-runtime to Requires in libs subpackage
+
+* Tue Jul 19 2016 Pavel Valena <pvalena@redhat.com> - 2.3.0-60
+- Fix and enhance systemtap tests
+- Remove tests depending on Europe/Moscow to avoid failures due to tzdata change
+
+* Wed Apr 13 2016 Pavel Valena <pvalena@redhat.com> - 2.3.0-60
 - Fix ruby lib path in macros.ruby.rh-ruby23
   - Resolves: rhbz#1255753
 - Manually set UTC timezone for tests
