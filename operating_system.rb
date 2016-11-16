@@ -42,7 +42,11 @@ module Gem
     # Get enabled SCLs in order of (most) dependent SCL to base SCL
 
     def x_scls
-      @x_scls ||= ENV['X_SCLS'].split(' ').reverse!
+      @x_scls ||= if ENV['X_SCLS'].kind_of?(String)
+        ENV['X_SCLS'].split(' ').reverse!
+      else
+        []
+      end
     end
     private :x_scls
 
