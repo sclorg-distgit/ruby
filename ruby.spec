@@ -23,7 +23,7 @@
 %global ruby_archive %{ruby_archive}-%{?milestone}%{?!milestone:%{?revision:r%{revision}}}
 %endif
 
-%global release 62
+%global release 64
 %{!?release_string:%global release_string %{?development_release:0.}%{release}%{?development_release:.%{development_release}}%{?dist}}
 
 # The RubyGems library has to stay out of Ruby directory three, since the
@@ -124,6 +124,10 @@ Patch7: ruby-2.2.3-Generate-preludes-using-miniruby.patch
 # Disable colorized ./configure due to missing macro AS_FUNCTION_DESCRIBE in Autoconf
 # http://git.savannah.gnu.org/cgit/autoconf.git/tree/lib/m4sugar/m4sh.m4?id=d99fef0e1e8e7a4c04b97fc4c6e0ffb01463622c
 Patch9: ruby-2.3.0-Disable-colorized-configure.patch
+# Support in no_proxy for domain names with whitespaces and leading dots
+# https://bugzilla.redhat.com/show_bug.cgi?id=1384810
+# https://github.com/ruby/ruby/commit/423d042371d0402071c309dc403ea2701600a98b
+Patch10: ruby-2.4.0-no_proxy-with-whitespaces-and-leading-dots.patch
 
 Requires: %{?scl_prefix}%{pkg_name}-libs%{?_isa} = %{version}-%{release}
 Requires: %{?scl_prefix}ruby(rubygems) >= %{rubygems_version}
@@ -464,6 +468,7 @@ rm -rf ext/fiddle/libffi*
 %patch6 -p1
 %patch7 -p1
 %patch9 -p1
+%patch10 -p1
 
 # Allow to use autoconf 2.63.
 sed -i '/AC_PREREQ/ s/(.*)/(2.62)/' configure.in
@@ -627,10 +632,12 @@ sed -i 's/^/%lang(ja) /' .ruby-doc.ja
 %check
 # Ruby software collection tests
 %{?scl:scl enable %scl - << \EOF
+set -e
 mkdir -p ./lib/rubygems/defaults
 cp %{SOURCE1} ./lib/rubygems/defaults
-make test-all TESTS="%{SOURCE14}" || exit 1
-rm -rf ./lib/rubygems/defaults
+sed 's/@SCL@/%{scl}/' %{SOURCE14} > ./%{basename:%{SOURCE14}}
+make test-all TESTS="%{basename:%{SOURCE14}}"
+rm -rf ./lib/rubygems/defaults ./%{basename:%{SOURCE14}}
 EOF}
 
 # Check RubyGems version correctness.
@@ -655,7 +662,7 @@ DISABLE_TESTS=""
 
 # https://bugs.ruby-lang.org/issues/11480
 # Once seen: http://koji.fedoraproject.org/koji/taskinfo?taskID=12556650
-DISABLE_TESTS="$DISABLE_TESTS -x test_fork.rb -x test_rinda.rb -x test_time_tz.rb"
+DISABLE_TESTS="$DISABLE_TESTS -x test_fork.rb"
 
 make check TESTS="-v $DISABLE_TESTS"
 
@@ -958,6 +965,14 @@ make check TESTS="-v $DISABLE_TESTS"
 %{ruby_libdir}/tkextlib
 
 %changelog
+* Wed Oct 26 2016 Pavel Valena <pvalena@redhat.com> - 2.3.1-64
+- Fix: do not fail in operating_system.rb when X_SCLS is empty
+  Resolves: rhbz#1387139
+
+* Mon Oct 17 2016 Pavel Valena <pvalena@redhat.com> - 2.3.1-63
+- Support in no_proxy for domain names with whitespaces and leading dots
+  Resolves: rhbz#1384810
+
 * Fri Aug 12 2016 Pavel Valena <pvalena@redhat.com> - 2.3.1-62
 - Fix support for dependent^2 SCLs
 - Update to Ruby 2.3.1
