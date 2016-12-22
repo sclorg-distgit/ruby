@@ -24,7 +24,7 @@
 %endif
 
 
-%global release 12
+%global release 16
 %{!?release_string:%global release_string %{?development_release:0.}%{release}%{?development_release:.%{development_release}}%{?dist}}
 
 %global rubygems_version 2.4.5
@@ -121,6 +121,17 @@ Patch7: rubygems-2.2.4-Limit-API-endpoint-to-original-security-domain.patch
 # Incomplete fix for CVE-2015-3900 (CVE-2015-4020).
 # https://github.com/rubygems/rubygems/commit/5c7bfb5
 Patch8: rubygems-2.2.5-Fix-API-endpoint-domain-clamping.patch
+# Fix the bug for object allocation during gc phase.
+# https://bugzilla.redhat.com/show_bug.cgi?id=1317076
+# https://github.com/ruby/ruby/commit/c4e2e5d.patch
+Patch9: ruby-2.2.3-dsym_fstrs-for-object-allocation-gc-phase.patch
+# Fix "dh key too small" error of OpenSSL 1.0.2c+.
+# https://github.com/rubygems/rubygems/issues/1289
+Patch10: ruby-2.3.0-test_gem_remote_fetcher.rb-get-rid-of-errors.patch
+# Fix named argument assignment from hash failure
+# https://bugzilla.redhat.com/show_bug.cgi?id=1369090
+# https://bugs.ruby-lang.org/issues/11027
+Patch11: ruby-2.2.3-vm_args.c-protect-value-stack-from-calling-other-met.patch
 
 Requires: %{?scl_prefix}%{pkg_name}-libs%{?_isa} = %{version}-%{release}
 Requires: %{?scl_prefix}ruby(rubygems) >= %{rubygems_version}
@@ -427,6 +438,9 @@ rm -rf ext/fiddle/libffi*
 %patch6 -p1
 %patch7 -p1
 %patch8 -p1
+%patch9 -p1
+%patch10 -p1
+%patch11 -p1
 
 # Allow to use autoconf 2.63.
 sed -i '/AC_PREREQ/ s/(.*)/(2.62)/' configure.in
@@ -605,9 +619,6 @@ sed -e "s|@LIBRARY_PATH@|%{tapset_libdir}/libruby.so.%{major_minor_version}|" \
 sed -i -r "s|( \*.*\*)\/(.*)|\1\\\/\2|" %{buildroot}%{tapset_dir}/libruby.so.%{major_minor_version}.stp
 
 %check
-# disabling tests temporarily since they fail
-exit 0
-
 # Ruby software collection tests
 %{?scl:scl enable %scl - << \EOF
 mkdir -p ./lib/rubygems/defaults
@@ -619,7 +630,7 @@ EOF}
 # Sanity check that SystemTap (dtrace) was detected.
 make runruby TESTRUN_SCRIPT=%{SOURCE11}
 
-DISABLE_TESTS=""
+DISABLE_TESTS="-x test_fork.rb -x test_rinda.rb -x test_time_tz.rb -x test_ssl.rb"
 
 # test_debug(TestRubyOptions) fails due to LoadError reported in debug mode,
 # when abrt.rb cannot be required (seems to be easier way then customizing
@@ -927,10 +938,22 @@ make check TESTS="-v $DISABLE_TESTS"
 %{ruby_libdir}/tkextlib
 
 %changelog
+* Mon Oct 31 2016 Vít Ondruch <vondruch@redhat.com> - 2.2.2-16
+- Fix named argument assignment from hash failure.
+  Resolves: rhbz#1369090
+
+* Wed Jun 22 2016 Jun Aruga <jaruga@redhat.com> - 2.2.2-15
+- Fix for "dh key too small" error of OpenSSL 1.0.2+.
+  Resolves: rhbz#1348918
+
+* Tue Jun 14 2016 Jun Aruga <jaruga@redhat.com> - 2.2.2-13
+- Fix the bug for object allocation during gc phase.
+  Resolves: rhbz#1317076
+
 * Mon Aug 10 2015 Vít Ondruch <vondruch@redhat.com> - 2.2.2-12
 - Fix DNS hijacking vulnerability in api_endpoint() (CVE-2015-3900,
   CVE-2015-4020).
-  Resolves: rhbz#1251465
+  Resolves: rhbz#1251466
 
 * Tue Apr 28 2015 Josef Stribny <jstribny@redhat.com> - 2.2.2-11
 - Update to Ruby 2.2.2

@@ -1,0 +1,31 @@
+From c4e2e5df814e77bfa19dc3ee5e5f907e4f368db9 Mon Sep 17 00:00:00 2001
+From: nagachika <nagachika@b2dd03c8-39d4-4d8f-98ff-823fe69b080e>
+Date: Thu, 14 May 2015 20:12:59 +0000
+Subject: [PATCH] merge revision(s) 49842: [Backport #10933]
+
+	* symbol.c (Init_sym): make dsym_fstrs a hash compared by identity
+	  as the keys are unique fstrings, to get rid of running hash and
+	  compare methods and causing new object allocation during garbage
+	  collection phase.  [ruby-dev:48891] [Bug #10933]
+
+
+git-svn-id: svn+ssh://ci.ruby-lang.org/ruby/branches/ruby_2_2@50493 b2dd03c8-39d4-4d8f-98ff-823fe69b080e
+---
+ ChangeLog | 7 +++++++
+ symbol.c  | 2 +-
+ version.h | 6 +++---
+ 3 files changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/symbol.c b/symbol.c
+index 1127020..696f017 100644
+--- a/symbol.c
++++ b/symbol.c
+@@ -122,7 +122,7 @@ static const struct st_hash_type symhash = {
+ void
+ Init_sym(void)
+ {
+-    VALUE dsym_fstrs = rb_hash_new();
++    VALUE dsym_fstrs = rb_ident_hash_new();
+     global_symbols.dsymbol_fstr_hash = dsym_fstrs;
+     rb_gc_register_mark_object(dsym_fstrs);
+     rb_obj_hide(dsym_fstrs);
