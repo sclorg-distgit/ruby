@@ -24,7 +24,7 @@
 %endif
 
 
-%global release 71
+%global release 72
 %{!?release_string:%global release_string %{?development_release:0.}%{release}%{?development_release:.%{development_release}}%{?dist}}
 
 # The RubyGems library has to stay out of Ruby directory three, since the
@@ -68,6 +68,10 @@
 %if 0%{?fedora}
 %global with_checksec 1
 %endif
+
+# There is no %%license macro on RHEL6.
+# https://bugzilla.redhat.com/show_bug.cgi?id=1386246
+%{!?_licensedir:%global license %%doc}
 
 Summary: An interpreter of object-oriented scripting language
 Name: %{?scl_prefix}ruby
@@ -742,10 +746,6 @@ make check TESTS="-v $DISABLE_TESTS"
 
 %postun libs -p /sbin/ldconfig
 
-# There is no %license macro on RHEL6.
-# https://bugzilla.redhat.com/show_bug.cgi?id=1386246
-%{!?_licensedir:%global license %%doc}
-
 %files
 %license BSDL
 %license COPYING
@@ -1043,6 +1043,10 @@ make check TESTS="-v $DISABLE_TESTS"
 %{gem_dir}/specifications/xmlrpc-%{xmlrpc_version}.gemspec
 
 %changelog
+* Mon Jan 09 2017 Vít Ondruch <vondruch@redhat.com> - 2.4.0-72
+- Reshuffle the %%license macro to avoid %%postun scriptlet issues.
+  Resolves: rhbz#1411233
+
 * Mon Jan 02 2017 Vít Ondruch <vondruch@redhat.com> - 2.4.0-71
 - ruby-libs should not own links to unbundled gems.
 
