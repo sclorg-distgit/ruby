@@ -24,7 +24,7 @@
 %endif
 
 
-%global release 72
+%global release 75
 %{!?release_string:%global release_string %{?development_release:0.}%{release}%{?development_release:.%{development_release}}%{?dist}}
 
 # The RubyGems library has to stay out of Ruby directory three, since the
@@ -68,10 +68,6 @@
 %if 0%{?fedora}
 %global with_checksec 1
 %endif
-
-# There is no %%license macro on RHEL6.
-# https://bugzilla.redhat.com/show_bug.cgi?id=1386246
-%{!?_licensedir:%global license %%doc}
 
 Summary: An interpreter of object-oriented scripting language
 Name: %{?scl_prefix}ruby
@@ -140,6 +136,9 @@ Patch7: ruby-2.2.3-Generate-preludes-using-miniruby.patch
 # hardening features of glibc (rhbz#1361037).
 # https://bugs.ruby-lang.org/issues/12666
 Patch9: ruby-2.3.1-Rely-on-ldd-to-detect-glibc.patch
+# This fixed rubygem-mongo build failures and may be something else as well.
+# https://bugs.ruby-lang.org/issues/13107
+Patch10: ruby-2.4.0-vm_insnhelper.c-block-argument-at-tailcall.patch
 
 Requires: %{?scl_prefix}%{pkg_name}-libs%{?_isa} = %{version}-%{release}
 Requires: %{?scl_prefix}ruby(rubygems) >= %{rubygems_version}
@@ -281,6 +280,7 @@ License:    GPLv2 and Ruby and MIT and SIL
 Requires:   %{?scl_prefix}ruby(release)
 Requires:   %{?scl_prefix}ruby(rubygems) >= %{rubygems_version}
 Requires:   %{?scl_prefix}ruby(irb) = %{irb_version}
+Requires:   %{?scl_prefix}rubygem(io-console) >= %{io_console_version}
 # Hardcode the dependency to keep it compatible with dependencies of the
 # official rubygem-rdoc gem.
 Requires:   %{?scl_prefix}rubygem(json) >= %{json_version}
@@ -512,6 +512,7 @@ rm -rf ext/fiddle/libffi*
 %patch6 -p1
 %patch7 -p1
 %patch9 -p1
+%patch10 -p1
 
 # Allow to use autoconf 2.63.
 sed -i '/AC_PREREQ/ s/(.*)/(2.62)/' configure.in
@@ -699,7 +700,6 @@ sed -i 's/^/%doc /' .ruby-doc.*
 sed -i 's/^/%lang(ja) /' .ruby-doc.ja
 
 %check
-exit 0
 # Ruby software collection tests
 %{?scl:scl enable %scl - << \EOF
 set -e
@@ -734,7 +734,7 @@ make runruby TESTRUN_SCRIPT="--enable-gems %{SOURCE12}"
 # Check if systemtap is supported.
 make runruby TESTRUN_SCRIPT=%{SOURCE13}
 
-DISABLE_TESTS=""
+DISABLE_TESTS="-x test_rinda.rb"
 
 # https://bugs.ruby-lang.org/issues/11480
 # Once seen: http://koji.fedoraproject.org/koji/taskinfo?taskID=12556650
@@ -747,6 +747,10 @@ make check TESTS="-v $DISABLE_TESTS"
 %postun libs -p /sbin/ldconfig
 
 %files
+# There is no %%license macro on RHEL6.
+# https://bugzilla.redhat.com/show_bug.cgi?id=1386246
+%{!?_licensedir:%global license %%doc}
+
 %license BSDL
 %license COPYING
 %lang(ja) %license COPYING.ja
@@ -1043,9 +1047,15 @@ make check TESTS="-v $DISABLE_TESTS"
 %{gem_dir}/specifications/xmlrpc-%{xmlrpc_version}.gemspec
 
 %changelog
-* Mon Jan 09 2017 Vít Ondruch <vondruch@redhat.com> - 2.4.0-72
+* Tue Jan 17 2017 Vít Ondruch <vondruch@redhat.com> - 2.4.0-75
+- Apply patch fixing rubygem-mongo build failures.
+
+* Mon Jan 09 2017 Vít Ondruch <vondruch@redhat.com> - 2.4.0-73
 - Reshuffle the %%license macro to avoid %%postun scriptlet issues.
   Resolves: rhbz#1411233
+
+* Mon Jan 09 2017 Vít Ondruch <vondruch@redhat.com> - 2.4.0-72
+- Add rubygem-io-console dependency for rubygem-rdoc.
 
 * Mon Jan 02 2017 Vít Ondruch <vondruch@redhat.com> - 2.4.0-71
 - ruby-libs should not own links to unbundled gems.

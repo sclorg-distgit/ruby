@@ -1,0 +1,36 @@
+From ff3496b0116ed2ed589d000b7bfca3d8288b009c Mon Sep 17 00:00:00 2001
+From: nobu <nobu@b2dd03c8-39d4-4d8f-98ff-823fe69b080e>
+Date: Mon, 9 Jan 2017 02:55:39 +0000
+Subject: [PATCH] vm_insnhelper.c: block argument at tailcall
+
+* vm_insnhelper.c (vm_call_iseq_setup_tailcall): check interrupts
+  after set up the new frame, not the passed block to be clobbered
+  by invoked finalizers and so on.  [ruby-core:78981] [Bug #13107]
+
+git-svn-id: svn+ssh://ci.ruby-lang.org/ruby/trunk@57293 b2dd03c8-39d4-4d8f-98ff-823fe69b080e
+---
+ vm_insnhelper.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/vm_insnhelper.c b/vm_insnhelper.c
+index b580412..662a2d6 100644
+--- a/vm_insnhelper.c
++++ b/vm_insnhelper.c
+@@ -1538,8 +1538,6 @@ vm_call_iseq_setup_tailcall(rb_thread_t *th, rb_control_frame_t *cfp, struct rb_
+     vm_pop_frame(th, cfp, cfp->ep);
+     cfp = th->cfp;
+ 
+-    RUBY_VM_CHECK_INTS(th);
+-
+     sp_orig = sp = cfp->sp;
+ 
+     /* push self */
+@@ -1558,6 +1556,8 @@ vm_call_iseq_setup_tailcall(rb_thread_t *th, rb_control_frame_t *cfp, struct rb_
+ 		  iseq->body->stack_max);
+ 
+     cfp->sp = sp_orig;
++    RUBY_VM_CHECK_INTS(th);
++
+     return Qundef;
+ }
+ 
