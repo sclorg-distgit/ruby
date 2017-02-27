@@ -24,7 +24,7 @@
 %endif
 
 
-%global release 70
+%global release 71
 %{!?release_string:%global release_string %{?development_release:0.}%{release}%{?development_release:.%{development_release}}%{?dist}}
 
 # The RubyGems library has to stay out of Ruby directory three, since the
@@ -789,7 +789,10 @@ make check TESTS="-v $DISABLE_TESTS"
 %dir %{ruby_libdir}
 %{ruby_libdir}/*.rb
 %exclude %{ruby_libdir}/irb.rb
+%exclude %{ruby_libdir}/json.rb
+%exclude %{ruby_libdir}/openssl.rb
 %exclude %{ruby_libdir}/psych.rb
+%exclude %{ruby_libdir}/rdoc.rb
 %{ruby_libdir}/cgi
 %{ruby_libdir}/digest
 %{ruby_libdir}/drb
@@ -1040,6 +1043,9 @@ make check TESTS="-v $DISABLE_TESTS"
 %{gem_dir}/specifications/xmlrpc-%{xmlrpc_version}.gemspec
 
 %changelog
+* Mon Jan 02 2017 Vít Ondruch <vondruch@redhat.com> - 2.4.0-71
+- ruby-libs should not own links to unbundled gems.
+
 * Mon Jan 02 2017 Vít Ondruch <vondruch@redhat.com> - 2.4.0-70
 - Upgrade to Ruby 2.4.0.
 - Workaround "an invalid stdio handle" error on PPC (rhbz#1361037).
