@@ -15,7 +15,7 @@ diff --git a/configure.in b/configure.in
 index 03a4152..0e371e2 100644
 --- a/configure.in
 +++ b/configure.in
-@@ -4057,6 +4057,10 @@ AC_ARG_WITH(vendorarchdir,
+@@ -4136,6 +4136,10 @@ AC_ARG_WITH(vendorarchdir,
              [vendorarchdir=$withval],
              [vendorarchdir=${multiarch+'${rubysitearchprefix}/vendor_ruby/${ruby_version}'}${multiarch-'${vendorlibdir}/${sitearch}'}])
  
@@ -26,7 +26,7 @@ index 03a4152..0e371e2 100644
  if test "${LOAD_RELATIVE+set}"; then
      AC_DEFINE_UNQUOTED(LOAD_RELATIVE, $LOAD_RELATIVE)
      RUBY_EXEC_PREFIX=''
-@@ -4080,6 +4084,7 @@ AC_SUBST(sitearchdir)dnl
+@@ -4159,6 +4163,7 @@ AC_SUBST(sitearchdir)dnl
  AC_SUBST(vendordir)dnl
  AC_SUBST(vendorlibdir)dnl
  AC_SUBST(vendorarchdir)dnl
