@@ -1,0 +1,43 @@
+From c8ccdbfe1e45cb3b832109d644296c0a3b3e0b59 Mon Sep 17 00:00:00 2001
+From: nobu <nobu@b2dd03c8-39d4-4d8f-98ff-823fe69b080e>
+Date: Sun, 2 Sep 2018 03:49:31 +0000
+Subject: [PATCH] configure.ac: -fstack-protector-strong
+
+* configure.ac: use -fstack-protector-strong if available instead of
+  -fstack-protector conditionally.  [ruby-core:88788] [Misc #15053]
+
+git-svn-id: svn+ssh://ci.ruby-lang.org/ruby/trunk@64614 b2dd03c8-39d4-4d8f-98ff-823fe69b080e
+---
+ configure.ac | 17 ++++++++++-------
+ 1 file changed, 10 insertions(+), 7 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 9328fa532de0..b8ee57239215 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -836,15 +836,18 @@ AS_IF([test "$GCC" = yes], [
+ 	stack_protector=no
+     ])
+     AS_IF([test -z "${stack_protector+set}"], [
+-	RUBY_TRY_CFLAGS(-fstack-protector, [stack_protector=yes], [stack_protector=no])
+-	AS_IF([test "x$stack_protector" = xyes], [
+-	    RUBY_TRY_LDFLAGS(-fstack-protector, [], [stack_protector=broken])
++	AS_FOR(option, opt, [-fstack-protector-strong -fstack-protector], [
++	    RUBY_TRY_CFLAGS(option, [stack_protector=yes])
++	    AS_IF([test "x$stack_protector" = xyes], [
++		RUBY_TRY_LDFLAGS(option, [], [stack_protector=])
++	    ])
++	    AS_IF([test "x$stack_protector" = xyes], [stack_protector=option; break])
+ 	])
+     ])
+-    AS_IF([test "x$stack_protector" = xyes], [
+-	RUBY_APPEND_OPTION(XCFLAGS, -fstack-protector)
+-	RUBY_APPEND_OPTION(XLDFLAGS, -fstack-protector)
+-	RUBY_APPEND_OPTION(LDFLAGS, -fstack-protector)
++    AS_CASE(["$stack_protector"], [-*], [
++	RUBY_APPEND_OPTION(XCFLAGS, $stack_protector)
++	RUBY_APPEND_OPTION(XLDFLAGS, $stack_protector)
++	RUBY_APPEND_OPTION(LDFLAGS, $stack_protector)
+     ])
+ 
+     AS_CASE("${compress_debug_sections:-zlib}",

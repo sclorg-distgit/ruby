@@ -1,0 +1,34 @@
+From d05e6269d4a4dfd701f5ddb3ae34306cba891511 Mon Sep 17 00:00:00 2001
+From: Jun Aruga <jaruga@redhat.com>
+Date: Fri, 3 Aug 2018 11:35:55 +0200
+Subject: [PATCH] Fix indent and typo from moveTimout to moveTimeout.
+
+---
+ lib/rdoc/generator/template/json_index/js/navigation.js | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/lib/rdoc/generator/template/json_index/js/navigation.js b/lib/rdoc/generator/template/json_index/js/navigation.js
+index e4126812..43c5118a 100644
+--- a/lib/rdoc/generator/template/json_index/js/navigation.js
++++ b/lib/rdoc/generator/template/json_index/js/navigation.js
+@@ -59,9 +59,8 @@ Navigation = new function() {
+         }
+         break;
+       case 13: //Event.KEY_RETURN:
+-        if (this.$current)
+-          e.preventDefault();
+-          this.select(this.$current);
++        if (this.$current) e.preventDefault();
++        this.select(this.$current);
+         break;
+     }
+     if (e.ctrlKey && e.shiftKey) this.select(this.$current);
+@@ -80,7 +79,7 @@ Navigation = new function() {
+     var go = function() {
+       if (!_this.moveTimeout) return;
+       _this[isDown ? 'moveDown' : 'moveUp']();
+-      _this.moveTimout = setTimeout(go, 100);
++      _this.moveTimeout = setTimeout(go, 100);
+     }
+     this.moveTimeout = setTimeout(go, 200);
+   }
