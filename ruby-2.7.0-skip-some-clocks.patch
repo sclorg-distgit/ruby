@@ -1,0 +1,18 @@
+diff --git a/spec/ruby/core/process/fixtures/clocks.rb b/spec/ruby/core/process/fixtures/clocks.rb
+index 7537cfaba8..55ee0f294f 100644
+--- a/spec/ruby/core/process/fixtures/clocks.rb
++++ b/spec/ruby/core/process/fixtures/clocks.rb
+@@ -11,6 +11,10 @@ def self.clock_constants
+       clocks -= [:CLOCK_BOOTTIME_ALARM, :CLOCK_REALTIME_ALARM]
+     end
+ 
++    clocks = clocks.reject { |clock, value|
++      [:CLOCK_BOOTTIME, :CLOCK_TAI].include?(clock)
++    }
++
+     clocks.sort.map { |c|
+       [c, Process.const_get(c)]
+     }
+-- 
+2.21.0
+

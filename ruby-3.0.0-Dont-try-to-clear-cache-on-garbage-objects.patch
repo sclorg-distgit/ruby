@@ -1,0 +1,31 @@
+From 0b54279d63c4be355e0ce9cc0b81e3df75045791 Mon Sep 17 00:00:00 2001
+From: Aaron Patterson <tenderlove@ruby-lang.org>
+Date: Fri, 15 Jan 2021 14:14:43 -0800
+Subject: [PATCH] Don't try to clear cache on garbage objects
+
+Method cache can be cleared during lazy sweeping.  An object that will
+be collected during lazy sweep *should not* have it's method cache
+cleared.  Soon-to-be-collected objects can be in an inconsistent state and
+this can lead to a crash.  This patch just leaves early if the object is
+going to be collected.
+
+Fixes [Bug #17536]
+
+Co-Authored-By: John Hawthorn <john@hawthorn.email>
+Co-Authored-By: Alan Wu <XrXr@users.noreply.github.com>
+---
+ vm_method.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/vm_method.c b/vm_method.c
+index 287d4aee6dea..81920bbe5bfb 100644
+--- a/vm_method.c
++++ b/vm_method.c
+@@ -136,6 +136,7 @@ static void
+ clear_method_cache_by_id_in_class(VALUE klass, ID mid)
+ {
+     VM_ASSERT(RB_TYPE_P(klass, T_CLASS) || RB_TYPE_P(klass, T_ICLASS));
++    if (rb_objspace_garbage_object_p(klass)) return;
+ 
+     if (LIKELY(RCLASS_EXT(klass)->subclasses == NULL)) {
+         // no subclasses

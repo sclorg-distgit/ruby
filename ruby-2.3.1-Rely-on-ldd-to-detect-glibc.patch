@@ -1,0 +1,30 @@
+From 346e147ba6480839b87046e9a9efab0bf6ed3660 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?V=C3=ADt=20Ondruch?= <vondruch@redhat.com>
+Date: Wed, 10 Aug 2016 17:35:48 +0200
+Subject: [PATCH] Rely on ldd to detect glibc.
+
+This is just workaround, since we know we are quite sure this will be successful
+on Red Hat platforms.
+
+This workaround rhbz#1361037
+---
+ test/fiddle/helper.rb |    3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/test/fiddle/helper.rb b/test/fiddle/helper.rb
+index 1da3d93..65148a1 100644
+--- a/test/fiddle/helper.rb
++++ b/test/fiddle/helper.rb
+@@ -139,6 +139,9 @@
+   libc_so = libm_so = "/usr/lib/libSystem.B.dylib"
+ end
+ 
++# Just ignore the heuristic, because it is not reliable on all platforms.
++libc_so = libm_so = nil
++
+ if !libc_so || !libm_so
+   ruby = EnvUtil.rubybin
+   # When the ruby binary is 32-bit and the host is 64-bit,
+-- 
+2.9.2
+
